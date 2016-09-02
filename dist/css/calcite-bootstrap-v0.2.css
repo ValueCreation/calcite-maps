@@ -2867,29 +2867,29 @@ fieldset[disabled] a.btn {
   pointer-events: none; }
 
 .btn-default {
-  color: #196fa6;
+  color: #c7461a;
   background-color: #ffffff;
-  border-color: #196fa6; }
+  border-color: #c7461a; }
   .btn-default:focus, .btn-default.focus {
     color: #196fa6;
     background-color: #e6e6e6;
-    border-color: #082537; }
+    border-color: #c7461a; }
   .btn-default:hover {
     color: #196fa6;
     background-color: #e6e6e6;
-    border-color: #114b71; }
+    border-color: #c7461a; }
   .btn-default:active, .btn-default.active,
   .open > .btn-default.dropdown-toggle {
     color: #196fa6;
     background-color: #e6e6e6;
-    border-color: #114b71; }
+    border-color: #c7461a; }
     .btn-default:active:hover, .btn-default:active:focus, .btn-default:active.focus, .btn-default.active:hover, .btn-default.active:focus, .btn-default.active.focus,
     .open > .btn-default.dropdown-toggle:hover,
     .open > .btn-default.dropdown-toggle:focus,
     .open > .btn-default.dropdown-toggle.focus {
       color: #196fa6;
       background-color: #d4d4d4;
-      border-color: #082537; }
+      border-color: #c7461a; }
   .btn-default:active, .btn-default.active,
   .open > .btn-default.dropdown-toggle {
     background-image: none; }
@@ -2901,10 +2901,10 @@ fieldset[disabled] a.btn {
   fieldset[disabled] .btn-default:active,
   fieldset[disabled] .btn-default.active {
     background-color: #ffffff;
-    border-color: #196fa6; }
+    border-color: #c7461a; }
   .btn-default .badge {
     color: #ffffff;
-    background-color: #196fa6; }
+    background-color: #c7461a; }
 
 .btn-primary {
   color: #ffffff;
@@ -5356,12 +5356,12 @@ button.list-group-item-danger {
   box-shadow: none; }
 
 .btn-default:hover, .btn-default :active {
-  background-color: #196fa6 !important;
+  background-color: #c7461a !important;
   color: #ffffff !important; }
 
 .btn-default:focus {
   background-color: #ffffff;
-  color: #196fa6; }
+  color: #c7461a; }
 
 .btn-primary:hover {
   background-color: #3b8fc4;
@@ -5383,7 +5383,7 @@ button.list-group-item-danger {
   background-color: #e04f1d; }
 
 .btn-default.active {
-  background-color: #d2e9f9; }
+  background-color: #c7461a; }
 
 .form-control:focus {
   border-color: #3b8fc4;

@@ -9,7 +9,7 @@
   <title>Shizuoka Hackers Demo</title>
 
   <!-- Calcite Bootstrap -->
-  <link rel="stylesheet" href="../../dist/css/calcite-bootstrap.min-v0.2.css">
+  <link rel="stylesheet" href="../../dist/css/calcite-bootstrap-v0.2.css">
 
   <!-- Calcite Maps -->
   <link rel="stylesheet" href="../../dist/css/calcite-maps-arcgis-4.x.min-v0.2.css">
@@ -46,7 +46,6 @@
       <ul class="dropdown-menu calcite-menu-drawer">
         <li><a class="hidden-md hidden-lg" href="#2dTab" aria-controls="2Dtab" role="tab" data-toggle="tab"> 2D 地図</a></li>
         <li><a class="hidden-md hidden-lg" href="#3dTab" aria-controls="3Dtab" role="tab" data-toggle="tab"> 3D 地図</a></li>
-        <li><a role="button" data-target="#panelInfo" aria-haspopup="true"><span class="glyphicon glyphicon-info-sign"></span> 情報</a></li>
         <li><a role="button" data-target="#panelBasemaps" aria-haspopup="true"><span class="glyphicon glyphicon-th-large"></span> 背景地図</a></li>
         <li><a role="button" data-target="#panelShizumichiInfo" aria-haspopup="true"><span class="glyphicon glyphicon-search"></span> しずみちinfo リアルタイム情報</a></li>
         <!-- 
@@ -153,7 +152,7 @@
       <div id="collapseShizumichiInfo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingShizumichiInfo">
         <div class="panel-body">
 
-  https://openapi.city.shizuoka.jp/opendataapi/servicepoint/disaster
+          <button type="button" id="get_disaster_info" class="btn btn-default">災害情報取得</button>
 
 
         </div>
@@ -172,14 +171,25 @@
 
     require(["esri/Map",
       "esri/Basemap",
+      "esri/WebMap",
       "esri/views/MapView",
       "esri/views/SceneView",
       "esri/widgets/Search",
       "esri/core/watchUtils",
+      "esri/Color",
+      "esri/Graphic",
+      "esri/geometry/Point",
+      "esri/geometry/Polyline",
+      "esri/geometry/Polygon",
+      "esri/symbols/SimpleMarkerSymbol",
+      "esri/symbols/SimpleLineSymbol",
+      "esri/symbols/SimpleFillSymbol",
       "dojo/query",
       "dojo/domReady!"
-    ], function(Map, Basemap, MapView, SceneView, Search, watchUtils, query) {
-        
+    ], function(Map, Basemap, WebMap, MapView, SceneView, Search, watchUtils, 
+      Color, Graphic, Point, Polyline, Polygon,
+      SimpleMarkerSymbol, SimpleLineSymbol, SimpleFillSymbol, query
+    ) {
       // App
       app = {
         scale: 1000000,
@@ -195,16 +205,24 @@
         mapView: null,
         sceneView: null,
         activeView: null,
-        searchWidgetNav: null
+        searchWidgetNav: null,
+        auth_key: "dda0985ec83bb294f00d16b6e69a9d9176b4d5138807d29e5b59328e440b295f"
       };
 
-      // Map 
-      var map = new Map({
-        basemap: app.basemap
+      var webmap = new WebMap({
+        portalItem: { // autocasts as new PortalItem()
+          id: "97b9f465b0374e3f9a336846d1ce14be"
+        }
       });
+
+      // Map 
+      //var map = new Map({
+      //  basemap: app.basemap
+      //});
+
       app.mapView = new MapView({
         container: "mapViewDiv",
-        map: map,
+        map: webmap,
         scale: app.scale,
         center: app.center,
         padding: app.viewPadding,
@@ -219,13 +237,14 @@
       });
    
       // Scene
-      var mapScene = new Map({
-        basemap: app.basemap,
-        ground: "world-elevation"
-      });
+      //var mapScene = new Map({
+      //  basemap: app.basemap,
+      //  ground: "world-elevation"
+      //});
+
       app.sceneView = new SceneView({
         container: "sceneViewDiv",
-        map: mapScene,   
+        map: webmap,   
         scale: app.scale,
         center: app.center,
         padding: app.viewPadding,
@@ -366,8 +385,68 @@
       // Home
       query(".calcite-navbar .navbar-brand").on("click", function(e) {
         app.activeView.goTo({target: app.initialExtent, rotation: 0});
-      })
+      });
 
+      // 災害情報の取得
+      query("#get_disaster_info").on("click", function(e) {
+        
+        //console.log("start: +++++++++++++++++++++++++++++++++");
+
+        getDisasterInfo().then(function(data) {
+
+            var markerSymbol = new SimpleMarkerSymbol({
+                  size: 10,
+                  color:"#ffa500",
+                  outline: {
+                      color: [255, 64, 0, 0.4],
+                      width: 7
+                  }
+            });
+
+            for (var i=0; i < data.Data.features.length; i++) {
+              
+                var geometry = data.Data.features[i].geometry;
+                var point = new Point({longitude: geometry.coordinates[0], latitude: geometry.coordinates[1]});
+
+                var pointGraphic = new Graphic({
+                    geometry: point,
+                    symbol: markerSymbol
+                });
+
+                app.mapView.graphics.add(pointGraphic);
+                app.sceneView.graphics.add(pointGraphic);
+
+            }
+
+        });
+
+      });
+
+      function getDisasterInfo() {
+
+          var defer = new $.Deferred;
+          
+          var disaster_url = "https://openapi.city.shizuoka.jp/opendataapi/servicepoint/disaster";
+          
+          var data = {
+              "auth_key": app.auth_key
+          };
+
+          $.ajax({
+                type: 'GET',
+                url: disaster_url,
+                data: data,
+                dataType: 'json',
+                crossDomain : true
+          }).done(function(data, textStatus, jqXHR) {
+                return defer.resolve(data);
+          }).fail(function(jqXHR, textStatus, errorThrown) {
+                return defer.reject(errorThrown);
+          });
+       
+          return defer.promise();
+
+      }
 
     });
 

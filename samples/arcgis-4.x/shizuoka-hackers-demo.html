@@ -23,6 +23,9 @@
       padding: 0;
       height: 100%;
     }
+    .esri-legend {
+      overflow: hidden;
+    }
   </style>
   
 </head>
@@ -64,6 +67,7 @@
       <li><a id="mapNav" class="hidden-xs hidden-sm" href="#2dTab" aria-controls="2Dtab" aria-expanded="true" role="tab" data-toggle="tab" data-tooltip="tip" title="2D View" data-placement="bottom">2D Map</a></li>
       <li class="active"><a id="sceneNav" class="hidden-xs hidden-sm" href="#3dTab" aria-controls="3Dtab" role="tab" data-toggle="tab" data-tooltip="tip" title="3D View" data-placement="bottom">3D Scene</a></li>                  
       <li><div class="calcite-navbar-search calcite-search-expander"><div id="searchNavDiv"></div></div></li>
+      <li><a role="button" data-target=".esri-legend" data-toggle="collapse" aria-expanded="true"><span class="glyphicon glyphicon-list"></span></a></li>
     </ul>
   </nav><!--/.navbar -->
 
@@ -153,7 +157,7 @@
         <div class="panel-body">
 
           <button type="button" id="get_disaster_info" class="btn btn-default">災害情報取得</button>
-
+          <button type="button" id="get_roadRegulation_info" class="btn btn-default">道路規制情報取得</button>
 
         </div>
       </div>
@@ -169,9 +173,11 @@
 
     var app;
 
-    require(["esri/Map",
+    require([
+      "esri/Map",
       "esri/Basemap",
       "esri/WebMap",
+      "esri/PopupTemplate",  // Add the module
       "esri/views/MapView",
       "esri/views/SceneView",
       "esri/widgets/Search",
@@ -184,11 +190,12 @@
       "esri/symbols/SimpleMarkerSymbol",
       "esri/symbols/SimpleLineSymbol",
       "esri/symbols/SimpleFillSymbol",
+      "esri/widgets/Legend",
       "dojo/query",
       "dojo/domReady!"
-    ], function(Map, Basemap, WebMap, MapView, SceneView, Search, watchUtils, 
+    ], function(Map, Basemap, WebMap, PopupTemplate, MapView, SceneView, Search, watchUtils, 
       Color, Graphic, Point, Polyline, Polygon,
-      SimpleMarkerSymbol, SimpleLineSymbol, SimpleFillSymbol, query
+      SimpleMarkerSymbol, SimpleLineSymbol, SimpleFillSymbol, Legend, query
     ) {
       // App
       app = {
@@ -234,6 +241,21 @@
 
       app.mapView.then(function() {
         app.mapView.popup.dockOptions.position = "top-right";
+
+        //var featureLayer = webmap.layers.items[0];
+        var featureLayer = webmap.layers.getItemAt(1);
+
+        var legend = new Legend({
+            view: app.mapView,
+            layerInfos: [{
+              layer: featureLayer,
+              title: "NY Educational Attainment"
+            }]
+        });
+
+        app.mapView.ui.add(legend, "top-right");
+        //query("#" + legend.id).addClass("collapse in");
+
       });
    
       // Scene
@@ -406,15 +428,75 @@
             for (var i=0; i < data.Data.features.length; i++) {
               
                 var geometry = data.Data.features[i].geometry;
+                var properties = data.Data.features[0].properties;
+
+                var disasterAtt = {
+                   "災害名称" : properties.disaster_name,
+                   "災害原因" : properties.reasons[0].reason,
+                   "災害原因の詳細" : properties.reasons[0].reason_detail,
+                   "災害地点" : properties.spot, 
+                   "路線名" : properties.road_name
+                };
+
                 var point = new Point({longitude: geometry.coordinates[0], latitude: geometry.coordinates[1]});
 
                 var pointGraphic = new Graphic({
-                    geometry: point,
-                    symbol: markerSymbol
+                   geometry: point, 
+                   symbol: markerSymbol,
+                   attributes: disasterAtt,  
+                   popupTemplate: new PopupTemplate({
+                     title: "災害情報", 
+                     content: "{*}"  
+                   })
                 });
 
                 app.mapView.graphics.add(pointGraphic);
                 app.sceneView.graphics.add(pointGraphic);
+
+            }
+
+        });
+
+      });
+
+      // 道路規制情報の取得
+      query("#get_roadRegulation_info").on("click", function(e) {
+        
+        getRoadRegulationInfo().then(function(data) {
+
+            var lineSymbol = new SimpleLineSymbol({
+               color: [64, 255, 0],
+               width: 4
+            });
+
+            for (var i=0; i < data.Data.features.length; i++) {
+              
+                var geometry = data.Data.features[i].geometry;
+                var properties = data.Data.features[i].properties;
+
+                var roadRegulationAtt = {
+                   "路線名" : properties.road_name,
+                   "規制原因" : properties.reason,
+                   "規制原因の詳細" : properties.reason_detail,
+                   "公開特記事項" : properties.public_memo
+                };
+
+                var polyline = new Polyline({
+                     paths: [ geometry.coordinates ]
+                });
+
+                var lineGraphic = new Graphic({
+                   geometry: polyline, 
+                   symbol: lineSymbol,
+                   attributes: roadRegulationAtt,  
+                   popupTemplate: new PopupTemplate({
+                     title: "規制情報", 
+                     content: "{*}"  
+                   })
+                });
+
+                app.mapView.graphics.add(lineGraphic);
+                app.sceneView.graphics.add(lineGraphic);
 
             }
 
@@ -443,9 +525,31 @@
           }).fail(function(jqXHR, textStatus, errorThrown) {
                 return defer.reject(errorThrown);
           });
-       
           return defer.promise();
+      }
 
+      function getRoadRegulationInfo() {
+
+          var defer = new $.Deferred;
+          
+          var roadRegulation_url = "https://openapi.city.shizuoka.jp/opendataapi/servicepoint/roadRegulation";
+          
+          var data = {
+              "auth_key": app.auth_key
+          };
+
+          $.ajax({
+                type: 'GET',
+                url: roadRegulation_url,
+                data: data,
+                dataType: 'json',
+                crossDomain : true
+          }).done(function(data, textStatus, jqXHR) {
+                return defer.resolve(data);
+          }).fail(function(jqXHR, textStatus, errorThrown) {
+                return defer.reject(errorThrown);
+          });
+          return defer.promise();
       }
 
     });

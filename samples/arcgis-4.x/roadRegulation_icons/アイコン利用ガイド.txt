@@ -1,0 +1,28 @@
+しずみちinfoで使用されているアイコン素材です。
+アプリケーションの開発に自由に利用していただけますが、改変は行わないでください。
+
+◆アイコン一覧
+alert20_notext_shaddow.png		警報 アイコン小
+alert28_shadow.png				警報 アイコン大
+allstop20_notext_shadow.png		全面通行止 アイコン小
+allstop28_red_shadow.png		全面通行止 アイコン大
+chain20_notext_shadow.png		チェーン規制 アイコン小
+chain28_shaddow.png				チェーン規制 アイコン大
+night20_notext_shadow.png		夜間通行止 アイコン小
+night28_shadow.png				夜間通行止 アイコン大
+oneside20_notext_shadow.png		片側交互通行 アイコン小
+oneside28_shadow.png			片側交互通行 アイコン大
+onestop20_notext_shadow.png		片側通行止 アイコン小
+onestop28_shadow.png			片側通行止 アイコン大
+other20_notext_shadow.png		その他規制 アイコン小
+other28_shadow.png				その他規制 アイコン大
+timestop20_notext_shadow.png	時間帯全面通行止 アイコン小
+timestop28_shadow.png			時間帯全面通行止 アイコン大
+truck20_notext_shadow.png		大型車両通行止 アイコン小
+truck28_shadow.png				大型車両通行止 アイコン大
+
+
+http://hackathon-wiki.shizuokashi-road.appspot.com/
+
+(C) 2014-2015 City of Shizuoka All Rights Reserved
+

@@ -23,9 +23,11 @@
       padding: 0;
       height: 100%;
     }
+    /*
     .esri-legend {
       overflow: hidden;
     }
+    */
   </style>
   
 </head>
@@ -188,6 +190,7 @@
       "esri/geometry/Polyline",
       "esri/geometry/Polygon",
       "esri/symbols/SimpleMarkerSymbol",
+      "esri/symbols/PictureMarkerSymbol",
       "esri/symbols/SimpleLineSymbol",
       "esri/symbols/SimpleFillSymbol",
       "esri/widgets/Legend",
@@ -195,7 +198,7 @@
       "dojo/domReady!"
     ], function(Map, Basemap, WebMap, PopupTemplate, MapView, SceneView, Search, watchUtils, 
       Color, Graphic, Point, Polyline, Polygon,
-      SimpleMarkerSymbol, SimpleLineSymbol, SimpleFillSymbol, Legend, query
+      SimpleMarkerSymbol, PictureMarkerSymbol, SimpleLineSymbol, SimpleFillSymbol, Legend, query
     ) {
       // App
       app = {
@@ -242,19 +245,18 @@
       app.mapView.then(function() {
         app.mapView.popup.dockOptions.position = "top-right";
 
-        //var featureLayer = webmap.layers.items[0];
-        var featureLayer = webmap.layers.getItemAt(1);
+        var layerInfos = [];
 
+        for (var i=0; i < webmap.layers.items.length; i++) {
+          var items = {layer: webmap.layers.items[i], title: "shizuoka"}
+          layerInfos.push(items);
+        }
         var legend = new Legend({
             view: app.mapView,
-            layerInfos: [{
-              layer: featureLayer,
-              title: "NY Educational Attainment"
-            }]
+            layerInfos: layerInfos
         });
 
         app.mapView.ui.add(legend, "top-right");
-        //query("#" + legend.id).addClass("collapse in");
 
       });
    
@@ -266,7 +268,7 @@
 
       app.sceneView = new SceneView({
         container: "sceneViewDiv",
-        map: webmap,   
+        map: webmap,           
         scale: app.scale,
         center: app.center,
         padding: app.viewPadding,
@@ -277,6 +279,20 @@
 
       app.sceneView.then(function() {
         app.sceneView.popup.dockOptions.position = "top-right";
+
+        var layerInfos = [];
+
+        for (var i=0; i < webmap.layers.items.length; i++) {
+          var items = {layer: webmap.layers.items[i], title: "shizuoka"}
+          layerInfos.push(items);
+        }
+        var legend = new Legend({
+            view: app.sceneView,
+            layerInfos: layerInfos
+        });
+
+        app.sceneView.ui.add(legend, "top-right");
+
       });
 
       app.activeView = app.sceneView;
@@ -417,11 +433,11 @@
         getDisasterInfo().then(function(data) {
 
             var markerSymbol = new SimpleMarkerSymbol({
-                  size: 10,
+                  size: 20,
                   color:"#ffa500",
                   outline: {
                       color: [255, 64, 0, 0.4],
-                      width: 7
+                      width: 14
                   }
             });
 
@@ -465,8 +481,9 @@
         getRoadRegulationInfo().then(function(data) {
 
             var lineSymbol = new SimpleLineSymbol({
-               color: [64, 255, 0],
-               width: 4
+                color: "#FFAA00",
+                width: 10,
+                style: "solid"
             });
 
             for (var i=0; i < data.Data.features.length; i++) {
@@ -474,20 +491,57 @@
                 var geometry = data.Data.features[i].geometry;
                 var properties = data.Data.features[i].properties;
 
-                var roadRegulationAtt = {
-                   "路線名" : properties.road_name,
-                   "規制原因" : properties.reason,
-                   "規制原因の詳細" : properties.reason_detail,
-                   "公開特記事項" : properties.public_memo
-                };
-
                 var polyline = new Polyline({
                      paths: [ geometry.coordinates ]
                 });
 
                 var lineGraphic = new Graphic({
                    geometry: polyline, 
-                   symbol: lineSymbol,
+                   symbol: lineSymbol
+                });
+
+                app.mapView.graphics.add(lineGraphic);
+                app.sceneView.graphics.add(lineGraphic);
+
+                var roadRegulationAtt = {
+                   "路線名" : properties.road_name,
+                   "規制種別" : properties.regulation_type,
+                   "規制原因" : properties.reason,
+                   "規制原因の詳細" : properties.reason_detail,
+                   "公開特記事項" : properties.public_memo
+                };
+
+                var image_icon;
+                if (properties.regulation_type === "警報") {
+                    image_icon = "roadRegulation_icons/alert28_shadow.png";
+                } else if (properties.regulation_type === "全面通行止") {
+                    image_icon = "roadRegulation_icons/allstop28_red_shadow.png";
+                } else if (properties.regulation_type === "チェーン規制") {
+                    image_icon = "roadRegulation_icons/chain28_shaddow.png";              
+                } else if (properties.regulation_type === "夜間通行止") {
+                    image_icon = "roadRegulation_icons/night28_shadow.png";
+                } else if (properties.regulation_type === "片側交互通行") {
+                    image_icon = "roadRegulation_icons/oneside28_shadow.png";
+                } else if (properties.regulation_type === "片側通行止") {
+                    image_icon = "roadRegulation_icons/onestop28_shadow.png";
+                } else if (properties.regulation_type === "その他規制") {
+                    image_icon = "roadRegulation_icons/other28_shadow.png";
+                } else if (properties.regulation_type === "時間帯全面通行止") {
+                    image_icon = "roadRegulation_icons/timestop28_shadow.png";
+                } else if (properties.regulation_type === "大型車両通行止") {
+                    image_icon = "roadRegulation_icons/truck28_shadow.png";
+                }
+                var markerSymbol = new PictureMarkerSymbol({
+                    url: image_icon,
+                    width: "28px",
+                    height: "32px"
+                });
+
+                var point = new Point({longitude: properties.mid_point_longitude, latitude: properties.mid_point_latitude});
+
+                var pointGraphic = new Graphic({
+                   geometry: point, 
+                   symbol: markerSymbol,
                    attributes: roadRegulationAtt,  
                    popupTemplate: new PopupTemplate({
                      title: "規制情報", 
@@ -495,8 +549,8 @@
                    })
                 });
 
-                app.mapView.graphics.add(lineGraphic);
-                app.sceneView.graphics.add(lineGraphic);
+                app.mapView.graphics.add(pointGraphic);
+                app.sceneView.graphics.add(pointGraphic);
 
             }
 

@@ -52,8 +52,8 @@
         <li><a class="hidden-md hidden-lg" href="#2dTab" aria-controls="2Dtab" role="tab" data-toggle="tab"> 2D 地図</a></li>
         <li><a class="hidden-md hidden-lg" href="#3dTab" aria-controls="3Dtab" role="tab" data-toggle="tab"> 3D 地図</a></li>
         <li><a role="button" data-target="#panelBasemaps" aria-haspopup="true"><span class="glyphicon glyphicon-th-large"></span> 背景地図</a></li>
+        <!--
         <li><a role="button" data-target="#panelShizumichiInfo" aria-haspopup="true"><span class="glyphicon glyphicon-search"></span> しずみちinfo リアルタイム情報</a></li>
-        <!-- 
         <li><a role="button" id="calciteToggleNavbar" aria-haspopup="true"><span class="glyphicon glyphicon-fullscreen"></span> フル地図</a></li>
         -->
       </ul>
@@ -185,6 +185,7 @@
       "esri/widgets/Search",
       "esri/core/watchUtils",
       "esri/Color",
+      "esri/layers/GraphicsLayer",
       "esri/Graphic",
       "esri/geometry/Point",
       "esri/geometry/Polyline",
@@ -197,7 +198,7 @@
       "dojo/query",
       "dojo/domReady!"
     ], function(Map, Basemap, WebMap, PopupTemplate, MapView, SceneView, Search, watchUtils, 
-      Color, Graphic, Point, Polyline, Polygon,
+      Color, GraphicsLayer, Graphic, Point, Polyline, Polygon,
       SimpleMarkerSymbol, PictureMarkerSymbol, SimpleLineSymbol, SimpleFillSymbol, Legend, query
     ) {
       // App
@@ -317,6 +318,11 @@
         return search;
       }
 
+      // 災害情報の取得
+      get_disaster_info_data();
+      // 規制情報の取得
+      get_roadRegulation_info_data();
+
       // Popup and Panel Events
       
       // Views - Listen to view size changes to show/hide panels
@@ -426,9 +432,7 @@
       });
 
       // 災害情報の取得
-      query("#get_disaster_info").on("click", function(e) {
-        
-        //console.log("start: +++++++++++++++++++++++++++++++++");
+      function get_disaster_info_data() {    
 
         getDisasterInfo().then(function(data) {
 
@@ -473,11 +477,11 @@
 
         });
 
-      });
+      };
 
       // 道路規制情報の取得
-      query("#get_roadRegulation_info").on("click", function(e) {
-        
+      function get_roadRegulation_info_data() {
+
         getRoadRegulationInfo().then(function(data) {
 
             var lineSymbol = new SimpleLineSymbol({
@@ -556,7 +560,7 @@
 
         });
 
-      });
+      };
 
       function getDisasterInfo() {
 
